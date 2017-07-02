@@ -1,5 +1,5 @@
 <div class="form-group">
-    {!! Form::label($zone, $name) !!}
+    {!! Form::label($zone, ucwords(str_replace('_', ' ', $zone)) . ':') !!}
     <div class="clearfix"></div>
 
     <a class="btn btn-primary btn-browse" onclick="openMediaWindowSingle(event, '{{ $zone }}');" <?php echo (isset($media->path))?'style="display:none;"':'' ?>><i class="fa fa-upload"></i>

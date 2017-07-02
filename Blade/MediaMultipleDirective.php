@@ -18,10 +18,6 @@ class MediaMultipleDirective
      * @var string|null
      */
     private $view;
-    /**
-     * @var string|null
-     */
-    private $name;
 
     public function show($arguments)
     {
@@ -31,14 +27,12 @@ class MediaMultipleDirective
         view()->composer($view, PartialAssetComposer::class);
 
         $zone = $this->zone;
-        
-        $name = $this->name ?: ucwords(str_replace('_', ' ', $this->zone));
 
         if ($this->entity !== null) {
             $media = $this->entity->filesByZone($this->zone)->get();
         }
 
-        return view($view, compact('media', 'zone', 'name'));
+        return view($view, compact('media', 'zone'));
     }
 
     /**
@@ -50,6 +44,5 @@ class MediaMultipleDirective
         $this->zone = array_get($arguments, 0);
         $this->entity = array_get($arguments, 1);
         $this->view = array_get($arguments, 2);
-        $this->name = array_get($arguments, 3);
     }
 }

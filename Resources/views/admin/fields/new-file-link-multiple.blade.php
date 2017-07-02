@@ -1,5 +1,5 @@
 <div class="form-group">
-    {!! Form::label($zone, $name) !!}
+    {!! Form::label($zone, ucwords(str_replace('_', ' ', $zone)) . ':') !!}
     <div class="clearfix"></div>
     <a class="btn btn-primary btn-upload" onclick="openMediaWindowMultiple(event, '{{ $zone }}')"><i class="fa fa-upload"></i>
         {{ trans('media::media.Browse') }}
