@@ -64,6 +64,19 @@ class MediaController extends Controller
 
     public function allVue(Request $request)
     {
+        if ($request->get('columns') !== null) {
+            $request->merge(['folder_id' => 0]);
+            // For datatables.net
+            $files = $this->file->serverPaginationFilteringFor($this->convertDataTableParams($request));
+
+            $output = [
+                "draw" => $request->get('draw'),
+                "recordsTotal" => $files->total(),
+                "recordsFiltered" => $files->total(),
+                'data' => MediaTransformer::collection($files),
+            ];
+            return response()->json($output);
+        }
         return MediaTransformer::collection($this->file->serverPaginationFilteringFor($request));
     }
 
@@ -117,7 +130,7 @@ class MediaController extends Controller
      * @param UploadMediaRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(UploadMediaRequest $request) : JsonResponse
+    public function store(UploadMediaRequest $request): JsonResponse
     {
         $savedFile = $this->fileService->store($request->file('file'), $request->get('parent_id'));
 
@@ -132,7 +145,7 @@ class MediaController extends Controller
         return response()->json($savedFile->toArray());
     }
 
-    public function storeDropzone(UploadDropzoneMediaRequest $request) : JsonResponse
+    public function storeDropzone(UploadDropzoneMediaRequest $request): JsonResponse
     {
         $savedFile = $this->fileService->store($request->file('file'));
 
@@ -164,7 +177,7 @@ class MediaController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function linkMedia(Request $request) : JsonResponse
+    public function linkMedia(Request $request): JsonResponse
     {
         $mediaId = $request->get('mediaId');
         $entityClass = $request->get('entityClass');
@@ -207,11 +220,11 @@ class MediaController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function unlinkMedia(Request $request) : JsonResponse
+    public function unlinkMedia(Request $request): JsonResponse
     {
         $imageableId = $request->get('imageableId');
         $deleted = DB::table('media__imageables')->whereId($imageableId)->delete();
-        if (! $deleted) {
+        if (!$deleted) {
             return response()->json([
                 'error' => true,
                 'message' => 'The file was not found.',
@@ -231,7 +244,7 @@ class MediaController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function sortMedia(Request $request) : JsonResponse
+    public function sortMedia(Request $request): JsonResponse
     {
         $imageableIdArray = $request->get('sortable');
 
@@ -256,13 +269,41 @@ class MediaController extends Controller
         ]);
     }
 
+    protected function convertDataTableParams(Request $request)
+    {
+        $cols = $request->get('columns');
+        $data = $request->except(['columns']);
+        if (!empty($cols)) {
+            $start = $request->get('start', 0);
+            $length = $request->get('length', 25);
+            $page = ($start / $length) + 1;
+            $search = $request->get('search');
+            $requestData = [
+                'per_page' => $length,
+                'page' => $page,
+                'draw' => $request->get('draw'),
+                'order_by' => $cols[$request->get('order')[0]['column']]['data'],
+                'order' => $request->get('order')[0]['dir'] === 'asc' ? 'ascending' : 'descending',
+                'search' => is_array($search) ? $search['value'] : $search
+            ];
+            foreach ($cols as $col) {
+                if ($col['searchable'] && isset($col['search']['value'])) {
+                    $requestData[$col['data']] = $col['search']['value'];
+                }
+            }
+            $data = array_merge($data, $requestData);
+            $request->replace($data);
+        }
+        return $request;
+    }
+
     /**
      * Get the path for the given file and type
      * @param string $mediaType
      * @param File $file
      * @return string
      */
-    private function getThumbnailPathFor($mediaType, File $file) : string
+    private function getThumbnailPathFor($mediaType, File $file): string
     {
         if ($mediaType === 'image') {
             return $this->imagy->getThumbnail($file->path, 'mediumThumb');

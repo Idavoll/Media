@@ -33,7 +33,7 @@ class MediaSingleDirective
         $zone = $this->zone;
 
         $name = $this->name ?: ucwords(str_replace('_', ' ', $this->zone));
-
+        $media = null;
         if ($this->entity !== null) {
             $media = $this->entity->filesByZone($this->zone)->first();
         }

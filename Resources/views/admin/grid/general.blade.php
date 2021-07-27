@@ -1,7 +1,7 @@
 @include('media::admin.grid.partials.content', ['isWysiwyg' => false])
 <script>
     $(document).ready(function () {
-        $('.jsInsertImage').on('click', function (e) {
+        $('body').on('click', '.jsInsertImage', function (e) {
             e.preventDefault();
             var mediaId = $(this).data('id'),
                 filePath = $(this).data('file-path'),
