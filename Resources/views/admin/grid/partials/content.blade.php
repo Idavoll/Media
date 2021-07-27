@@ -7,12 +7,13 @@
     {!! Theme::style('vendor/admin-lte/dist/css/AdminLTE.css') !!}
     {!! Theme::style('vendor/datatables.net-bs/css/dataTables.bootstrap.min.css') !!}
     {!! Theme::style('vendor/font-awesome/css/font-awesome.min.css') !!}
-    <link href="{!! Module::asset('media:css/dropzone.css') !!}" rel="stylesheet" type="text/css" />
+    <link href="{!! Module::asset('media:css/dropzone.css') !!}" rel="stylesheet" type="text/css"/>
     <style>
         body {
             background: #ecf0f5;
             margin-top: 20px;
         }
+
         .dropzone {
             border: 1px dashed #CCC;
             min-height: 227px;
@@ -38,7 +39,8 @@
             <div class="box-header">
                 <h3 class="box-title">{{ trans('media::media.choose file') }}</h3>
                 <div class="box-tools pull-right">
-                    <button class="btn btn-box-tool jsShowUploadForm" data-toggle="tooltip" title="" data-original-title="Upload new">
+                    <button class="btn btn-box-tool jsShowUploadForm" data-toggle="tooltip" title=""
+                            data-original-title="Upload new">
                         <i class="fa fa-cloud-upload"></i>
                         Upload new
                     </button>
@@ -55,50 +57,6 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <?php if ($files): ?>
-                    <?php foreach ($files as $file): ?>
-                        <tr>
-                            <td>{{ $file->id }}</td>
-                            <td>
-                                <?php if ($file->isImage()): ?>
-                                <img src="{{ Imagy::getThumbnail($file->path, 'smallThumb') }}" alt=""/>
-                                <?php else: ?>
-                                <i class="fa {{ FileHelper::getFaIcon($file->media_type) }}" style="font-size: 20px;"></i>
-                                <?php endif; ?>
-                            </td>
-                            <td>{{ $file->filename }}</td>
-                            <td>
-                                <div class="btn-group">
-                                    <?php if ($isWysiwyg === true): ?>
-                                    <button type="button" class="btn btn-primary btn-flat dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                                        {{ trans('media::media.insert') }} <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu">
-                                        <?php foreach ($thumbnails as $thumbnail): ?>
-                                        <li data-file-path="{{ Imagy::getThumbnail($file->path, $thumbnail->name()) }}"
-                                            data-id="{{ $file->id }}" data-media-type="{{ $file->media_type }}"
-                                            data-mimetype="{{ $file->mimetype }}" class="jsInsertImage">
-                                            <a href="">{{ $thumbnail->name() }} ({{ $thumbnail->size() }})</a>
-                                        </li>
-                                        <?php endforeach; ?>
-                                        <li class="divider"></li>
-                                        <li data-file-path="{{ $file->path }}" data-id="{{ $file->id }}"
-                                            data-media-type="{{ $file->media_type }}" data-mimetype="{{ $file->mimetype }}" class="jsInsertImage">
-                                            <a href="">Original</a>
-                                        </li>
-                                    </ul>
-                                    <?php else: ?>
-                                    <a href="" class="btn btn-primary jsInsertImage btn-flat" data-id="{{ $file->id }}"
-                                       data-file-path="{{ Imagy::getThumbnail($file->path, 'mediumThumb') }}"
-                                       data-media-type="{{ $file->media_type }}" data-mimetype="{{ $file->mimetype }}">
-                                        {{ trans('media::media.insert') }}
-                                    </a>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -117,8 +75,8 @@
 </script>
 <script src="{!! Module::asset('media:js/init-dropzone.js') !!}"></script>
 <script>
-    $( document ).ready(function() {
-        $('.jsShowUploadForm').on('click',function (event) {
+    $(document).ready(function () {
+        $('.jsShowUploadForm').on('click', function (event) {
             event.preventDefault();
             $('.dropzone').fadeToggle();
         });
@@ -128,17 +86,80 @@
 <?php $locale = App::getLocale(); ?>
 <script type="text/javascript">
     $(function () {
-        $('.data-table').dataTable({
-            "paginate": true,
-            "lengthChange": true,
-            "filter": true,
-            "sort": true,
-            "info": true,
-            "autoWidth": true,
-            "order": [[ 0, "desc" ]],
-            "language": {
-                "url": '<?php echo Module::asset("core:js/vendor/datatables/{$locale}.json") ?>'
+        function getThumbnailPath(thumbnails, name) {
+            for (var i in thumbnails) {
+                if (thumbnails.hasOwnProperty(i) && thumbnails[i].name === name) {
+                    return thumbnails[i].path;
+                }
             }
-        });
-    });
+        }
+
+        $('.data-table')
+            .dataTable({
+                'serverSide': true,
+                'ajax': {
+                    'url': "{{ route('api.media.all-vue') }}",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', AuthorizationHeaderValue);
+                    }
+                },
+                columnDefs: [
+                    {
+                        'targets': 0,
+                        'orderable': false,
+                        'data': 'id'
+                    }, {
+                        'targets': 1,
+                        'orderable': false,
+                        'data': function (row, type, val, meta) {
+                            if (row.is_image === true) {
+                                return '<img src="' + row.medium_thumb + '"/>';
+                            } else {
+                                return '<i class="fa ' + row.fa_icon + '"></i>';
+                            }
+                        }
+                    }, {
+                        'targets': 2,
+                        'orderable': false,
+                        'data': 'filename'
+                    },
+                    {
+                        targets: 3,
+                        orderable: false,
+                        data: function (row, type, val, meta) {
+                            var buttons = '<div class="btn-group">\n';
+                                buttons += '                                    <button type="button" class="btn btn-primary btn-flat dropdown-toggle" data-toggle="dropdown" aria-expanded="false">\n' +
+                                '                                        {{ trans('media::media.insert') }} <span class="caret"></span>\n' +
+                                '                                    </button>\n' +
+                                '                                    <ul class="dropdown-menu" role="menu">\n';
+                            <?php foreach ($thumbnails as $thumbnail): ?>
+                                buttons += '<li>\n' +
+                                '                                            <a data-file-path="'+ getThumbnailPath(row.thumbnails, "{{ $thumbnail->name() }}") + '"\n' +
+                                '                                            data-id="' + row.id + '" data-media-type="' + row.media_type + '"\n' +
+                                '                                            data-mimetype="' + row.mimetype + '"href="#" class="jsInsertImage">{{ $thumbnail->name() }} ({{ $thumbnail->size() }})</a>\n' +
+                                '                                        </li>\n';
+                            <?php endforeach; ?>
+                                buttons += '                                        <li class="divider"></li>\n' +
+                                '                                        <li>\n' +
+                                '                                            <a data-file-path="' + row.path + '" data-id=' + row.id + '"\n' +
+                                '                                            data-media-type="' + row.media_type + '" data-mimetype="' + row.mimetype + '" href="#" class="jsInsertImage">Original</a>\n' +
+                                '                                        </li>\n' +
+                                '                                    </ul>\n';
+                                buttons += '                                </div>';
+                            return buttons;
+                        }
+                    }
+                ],
+                'paginate': true,
+                'lengthChange': true,
+                'filter': true,
+                'sort': true,
+                'info': true,
+                'autoWidth': true,
+                'order': [[0, 'desc']],
+                'language': {
+                    'url': '<?php echo Module::asset("core:js/vendor/datatables/{$locale}.json") ?>'
+                }
+            })
+    })
 </script>

@@ -1,7 +1,7 @@
 @include('media::admin.grid.partials.content', ['isWysiwyg' => true])
 <script>
-    $(document).ready(function () {
-        $('.jsInsertImage').on('click', function (e) {
+    $(function () {
+        $("body").on('click', '.jsInsertImage', function (e) {
             e.preventDefault();
             function getUrlParam(paramName) {
                 var reParam = new RegExp('(?:[\?&]|&)' + paramName + '=([^&]+)', 'i');
